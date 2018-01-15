@@ -1,0 +1,271 @@
+pragma solidity ^0.4.15;
+
+/**
+ * @title Infrastructure Ontario's DSWA
+ * @author Marcelo Paniza <marcelo.paniza@infrastructureontario.ca>
+ * @dev Smart Contract for Distributed Smart Work Assignment
+ * @workflow Client Mint contract amount plus some,
+ *           IO approves, 
+ *           CBRE Approves and assign Consultant (not mandatory) and Vendor,
+ *           Vendor returns to indicate that work is completed,
+ *           CBRE returns to confirm work status,
+ *           IO returns to confirm work status,
+ *           Client returns to confirm work status and automaticall pay vendor
+ *           End of contract
+ */
+
+import './ERC20.sol';
+import '../utils/SafeMath.sol';
+import '../utils/LoggingErrors.sol';
+
+/**
+ * @title Standard ERC20 Token
+ */
+contract SWA is ERC20, LoggingErrors {
+
+  using SafeMath for uint256;
+
+  /**
+   * Storage
+   *
+   */
+  string public constant symbol = "DPD";
+  string public constant name = "Distributed Project Delivery";
+  uint public constant decimals = 18;
+
+  // Amount of tokens currentl in circulation
+  uint256 public totalSupply_;
+
+  enum ( IO, CLIENT, CBRE, CONSULTANT, VENDOR } participantType
+  address owner_;
+
+  struct Participant {
+    address id; //account number that will send and/or receive tokens
+    uint receivable; // how much will this participant receive when the contract is done
+    ERC20 wallet;
+    bool approved;
+    bool paid; // once it is all approved, we will pay the participants from contract balance and will mark as paid here
+	participantType participantRole;
+	
+  }
+
+  // create a contract without participants
+  // add participants later
+  // TODO: decide... hash a contract number or use real life... privacy concerns
+
+  struct Contract {
+    uint contractId; 
+    uint balance; //contract balance
+    uint numParticipants;
+    uint status; // todo, decide the statuses
+	uint overBudgetPercentage;
+    mapping (uint => Participant) participants;
+	mapping (address => Participant) participants;
+  }
+  
+  mapping (uint => Contract) contracts;
+
+  uint numContracts=0;
+
+  /**
+   * Events
+   */
+  event LogTokensMinted(address indexed _to, address to, uint256 value, uint256 totalSupply);
+
+  /**
+   * @dev CONSTRUCTOR - set token owner account
+   */
+  function SWA() {
+    owner_ = msg.sender;
+  }
+
+  /**
+   * External
+   */
+
+//create new contract and return new contract id
+function createContract() external returns (uint) {
+  numContracts ++;
+  contracts[numContracts] = Contract(numContracts, 0, 0, 0);
+
+  return numContracts;
+}
+
+/*
+* Add a participant to the contract
+*/
+function addParticipant(uint _contractId, address _id, participantType role) external returns (uint) {
+  
+  uint lastParticipant = Contract[_contractId].numParticipants++;
+  Participant participant;
+  participant.address = _id;
+  participant.participantRole = role;
+  participant.approved=false;
+   
+  
+  contracts[_contractId].participants[lastParticipant] = participant;
+  contracts[_contractId].participants[_id] = participant;
+  return lastParticipant;
+}
+
+/*
+*Add funds for the contract... that is the Client (Participant)
+*/
+
+function addContractFunds(uint _contractId, address _clientId, participantType role , uint amt) external returns (bool) {
+	
+    // only IO can set the initial client amount.
+	uint _role=findParticipant(role);
+	if ( verifySenderRole( _contractId, msg.sender, role) {
+		if (_role == CLIENT ) {
+			contracts[_contractId].balance += amt;
+			
+			if ( contracts[_contractId].balance >= vendorCost + consultantFee )
+				state = OK;
+			
+		
+		} else
+		if (_role == CONSULTANT ) {
+			Participant consultant = findParticipantByRole(  _contractId, CONSULTANT) 
+			consultant.receivable = amt;
+		}
+	}
+}
+
+function setParticipantResponse(uint _contractId,  bool approve) external returns (bool) {
+
+  // get a reference of the contract and participantId
+  // set approve... if approved, set to true
+
+     contracts[_contractId].participants[msg.sender].approved = approve;
+
+  return true;
+}
+
+function closeContract (uint _contractId) external returns (bool) {
+
+  return true;
+}
+
+function findParticipantByRole( uint _contractId, uint role) external returns (uint){
+	for ( uint i=0; i < contracts[_contractId].numParticipants; i++) {
+	
+		if ( Contract[_contractId].participants[i].role == role ) {
+			return contracts[_contractId].participants[i].id;
+
+
+	};
+	return -1;
+
+}
+
+function verifySenderRole( uint _contractId, address sender, uint role) external returns (bool){
+	for ( uint i=0; i < Contract[_contractId].numParticipants; i++) {
+	
+		if ( contracts[_contractId].participants[i].role == role ) && Contract[_contractId].participants[i].id == sender  {
+			return true;
+		}
+
+	};
+	return false;
+
+}
+function clientAddBalance(uint _contractId, uint balanceAmt){
+	if (msg.sender ==  findParticipantByRole(_contractId, CLIENT) ) {
+		contract[_contractId].balance += balanceAmt;
+		balance += balanceAmt
+		if ( balance >= vendorCost + consultantFee )
+			state = OK;
+			
+		
+	}
+}
+
+CBREAddPpartcipant( participant consultant, consultantFeeAmt)
+		consultantFee = consultantFeeAmt
+		consultant from list.
+		
+	ConsultantAddedTenderDocument(){
+		check msg.send == consultant.
+		
+	}
+	
+	
+	ConsultantApprovalTenderDocumentsFrom.( CBRE)
+		CBRE and Client need approved.
+		if ( preTenderCost > 20% of Initalbalance)
+		  state = insufficentFund
+	}
+
+	CBREAddVendor( vendor, vendorCostAmt) {
+		addParticpantsList( Vendor);
+		vendorcost=vendorCostAmt
+		if (DoBudgetCheck() false)
+		  state = insufficentFund
+	}	
+	CBREUpdateCost( vendor, vendorCostAmt) {
+		addParticpantsList( Vendor);
+		vendorcost=vendorCostAmt
+		if (DoBudgetCheck() false)
+		  state = insufficentFund
+	}	
+	
+	VendorInitiateCompletion()
+		TriggerEventToAllParticipantExceptVendor( )
+		
+	}
+	
+	
+	IOPayemnt() {
+		if ( CheckContractApprove() ) 
+				// 90% payment.
+				IOPaid( consulant, consultantAmt ) {
+				IOPaid( vendor, 90%vendorAmt ) {
+				
+				}
+			}
+	}
+	
+	
+	RemainderPayment()
+		if ( CheckContractApprove() ) 
+				// 10% payment.
+				
+				IOPaid( vendor, 10%vendorAmt ) {
+				
+				}
+			}
+	}	
+	
+/*********************************************************************** 
+
+stopped here
+
+
+************************************************************************/
+
+
+  /**
+   * @param _owner The address from which the balance will be retrieved.
+   * @return The balance
+   */
+  function balanceOf(
+    address _owner
+  ) external
+    constant
+    returns (uint256)
+  {
+    return 0; // balances_[_owner];
+  }
+
+  /**
+   * @return total amount of tokens.
+   */
+  function totalSupply()
+    external
+    constant
+    returns (uint256)
+  {
+    return totalSupply_;
+  }
+}
