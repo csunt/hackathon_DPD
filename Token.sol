@@ -1,8 +1,13 @@
 pragma solidity ^0.4.15;
 
 import './ERC20.sol';
+<<<<<<< HEAD
 import './SafeMath.sol';
 import './LoggingErrors.sol';
+=======
+import '../utils/SafeMath.sol';
+import '../utils/LoggingErrors.sol';
+>>>>>>> ba9cbc28b818e55967486809be27ae0829ac111d
 
 /**
  * @title Standard ERC20 Token
@@ -18,7 +23,10 @@ contract Token is ERC20, LoggingErrors {
   string public constant symbol = 'BLG';
   string public constant name = 'Blockchain Learning Group Community Token';
   uint public constant decimals = 18;
+<<<<<<< HEAD
   uint public constant someValue = 19;
+=======
+>>>>>>> ba9cbc28b818e55967486809be27ae0829ac111d
 
   // Amount of tokens currentl in circulation
   uint256 public totalSupply_;
@@ -39,7 +47,11 @@ contract Token is ERC20, LoggingErrors {
    * Events
    */
   event LogTokensMinted(address indexed _to, address to, uint256 value, uint256 totalSupply);
+<<<<<<< HEAD
   event LogEvent( uint256 value );
+=======
+
+>>>>>>> ba9cbc28b818e55967486809be27ae0829ac111d
   /**
    * @dev CONSTRUCTOR - set blg owner account
    */
@@ -94,9 +106,14 @@ contract Token is ERC20, LoggingErrors {
 
     totalSupply_ = totalSupply_.add(_value);
     balances_[_to] = balances_[_to].add(_value);
+<<<<<<< HEAD
     LogEvent( _value);
     LogTokensMinted(_to, _to, _value, totalSupply_);
     
+=======
+
+    LogTokensMinted(_to, _to, _value, totalSupply_);
+>>>>>>> ba9cbc28b818e55967486809be27ae0829ac111d
     Transfer(address(0), _to, _value);
 
     return true;
